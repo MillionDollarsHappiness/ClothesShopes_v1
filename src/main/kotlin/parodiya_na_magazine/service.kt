@@ -10,6 +10,7 @@ fun manageFavoritesAndPurchases(brand: Brand) {
     if (readLine()?.lowercase() == "y") {
         addToFavorites(brand.name)
     }
+
     println("Хотите купить? (y/n)")
     if (readLine()?.lowercase() == "y") {
         purchase(brand.name)
@@ -17,49 +18,91 @@ fun manageFavoritesAndPurchases(brand: Brand) {
 }
 
 fun addToFavorites(item: String) {
-    favorites.add(item)
-    println("$item добавлено в избранное.")
-    saveFavorites(favorites)
+    if (!favorites.contains(item)) {
+        favorites.add(item)
+        println("$item добавлено в избранное.")
+        saveFavorites(favorites)  // Сохраняем изменения в избранном
+    } else {
+        println("$item уже в избранном.")
+    }
 }
 
 fun purchase(item: String) {
-    purchases.add(item)
-    favorites.remove(item)
-    println("$item куплено.")
-    savePurchases(purchases)
-    saveFavorites(favorites)
-}
-// Сериализация покупок
-fun savePurchases(purchases: MutableList<String>) {
-    val jsonData = Json.encodeToString(purchases)
-    purchasesFile.writeText(jsonData)
-}
-
-// Загрузка покупок
-fun loadPurchases(): MutableList<String> {
-    return if (purchasesFile.exists()) {
-        val jsonData = purchasesFile.readText()
-        Json.decodeFromString<MutableList<String>>(jsonData) // Декодируем как MutableList
+    if (favorites.contains(item)) {
+        purchases.add(item)
+        favorites.remove(item)
+        println("$item куплено.")
+        savePurchases(purchases)    // Сохраняем покупки
+        saveFavorites(favorites)   // Обновляем избранное
     } else {
-        mutableListOf() // Возвращаем пустой MutableList, если файл не существует
+        println("$item не найдено в избранном.")
     }
 }
+
+// Сериализация покупок
+fun savePurchases(purchases: MutableList<String>) {
+    try {
+        // Читаем существующие данные из файла
+        val existingData = if (purchasesFile.exists()) {
+            val jsonData = purchasesFile.readText()
+            Json.decodeFromString<MutableList<String>>(jsonData)
+        } else {
+            mutableListOf<String>()
+        }
+
+        // Добавляем новые покупки, если их нет в существующем списке
+        for (purchase in purchases) {
+            if (!existingData.contains(purchase)) {
+                existingData.add(purchase)
+            }
+        }
+
+        // Сохраняем обновленный список
+        val jsonData = Json.encodeToString(existingData)
+        purchasesFile.writeText(jsonData)
+        println("Покупки успешно сохранены.")
+    } catch (e: Exception) {
+        println("Ошибка при сохранении покупок: ${e.message}")
+    }
+}
+// Загрузка покупок
+fun loadPurchases(): List<String> {
+    return if (purchasesFile.exists()) {
+        try {
+            val jsonData = purchasesFile.readText()
+            Json.decodeFromString<MutableList<String>>(jsonData)
+        } catch (e: Exception) {
+            println("Ошибка при загрузке покупок: ${e.message}")
+            mutableListOf<String>()
+        }
+    } else {
+        mutableListOf<String>()
+    }
+}
+
 
 // Сериализация избранных товаров
 fun saveFavorites(favorites: MutableList<String>) {
-    val jsonData = Json.encodeToString(favorites)
-    favoritesFile.writeText(jsonData)
-}
-
-// Загрузка избранных товаров
-fun loadFavorites(): MutableList<String> {
-    return if (favoritesFile.exists()) {
-        val jsonData = favoritesFile.readText()
-        Json.decodeFromString<MutableList<String>>(jsonData) // Декодируем как MutableList
-    } else {
-        mutableListOf() // Возвращаем пустой MutableList, если файл не существует
+    try {
+        val jsonData = Json.encodeToString(favorites)
+        favoritesFile.writeText(jsonData)
+    } catch (e: Exception) {
+        println("Ошибка при сохранении избранного: ${e.message}")
     }
 }
 
+// Загрузка избранных товаров
+fun loadFavorites(): List<String> {
+    return if (favoritesFile.exists()) {
+        try {
+            val jsonData = favoritesFile.readText()
+            Json.decodeFromString<List<String>>(jsonData)
+        } catch (e: Exception) {
+            println("Ошибка при загрузке избранного: ${e.message}")
+            emptyList()
+        }
+    } else {
+        emptyList()
+    }
 
-
+}

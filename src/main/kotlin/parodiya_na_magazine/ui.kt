@@ -100,3 +100,49 @@ fun showPurchases(purchases: MutableList<String>) {
         }
     }
 }
+fun purchaseFromFavorites(favorites: MutableList<String>, purchases: MutableList<String>) {
+    println("Введите номер товара для покупки из избранного:")
+
+    // Печатаем список избранных товаров с номерами
+    favorites.forEachIndexed { index, item ->
+        println("${index + 1}. $item")
+    }
+
+    // Получаем ввод пользователя
+    val index = readLine()?.toIntOrNull()
+
+    if (index != null && index in 1..favorites.size) {
+        // Индекс из ввода пользователя, вычитаем 1, так как индексация с 0
+        val item = favorites[index - 1]
+        println("Вы купили товар: $item")
+
+        // Добавляем товар в список покупок
+        purchases.add(item)
+
+        // Удаляем товар из избранного
+        favorites.removeAt(index - 1)
+
+        // Сохраняем изменения в покупках и избранном
+        savePurchases(purchases)
+        saveFavorites(favorites)
+    } else {
+        println("Неверный выбор, попробуйте снова.")
+    }
+}
+fun buyAllFavorites(favorites: MutableList<String>, purchases: MutableList<String>) {
+    if (favorites.isNotEmpty()) {
+        println("Вы купили все товары из избранного!")
+
+        // Перемещаем все товары из избранного в покупки
+        purchases.addAll(favorites)
+
+        // Очищаем список избранных товаров
+        favorites.clear()
+
+        // Сохраняем изменения в списках покупок и избранного
+        savePurchases(purchases)
+        saveFavorites(favorites)
+    } else {
+        println("В вашем избранном нет товаров для покупки!")
+    }
+}
